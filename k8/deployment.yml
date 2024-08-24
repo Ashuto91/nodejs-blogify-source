@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
         - name: blogify
-          image: ashuto91/blogify:${BUILD_NUMBER}
+          image: ashuto91/blogify:latest
           ports:
             - containerPort: 8000
           livenessProbe:
