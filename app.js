@@ -5,22 +5,28 @@ const express = require("express");
 const mongoose = require("mongoose");
 const cookiePaser = require("cookie-parser");
 
-
 const Blog = require("./models/blog");
-
 const userRoute = require("./routes/user");
 const blogRoute = require("./routes/blog");
 
-const {
-  checkForAuthenticationCookie,
-} = require("./middlewares/authentication");
+const { checkForAuthenticationCookie } = require("./middlewares/authentication");
 
 const app = express();
 const PORT = process.env.PORT || 8000;
 
 mongoose
   .connect(process.env.MONGO_URL)
-  .then((e) => console.log("MongoDB Connected"));
+  .then(() => console.log("MongoDB Connected"));
+
+// Health Check Endpoint
+app.get('/healthz', (req, res) => {
+  res.status(200).send('OK');
+});
+
+// Readiness Check Endpoint
+app.get('/ready', (req, res) => {
+  res.status(200).send('Ready');
+});
 
 app.set("view engine", "ejs");
 app.set("views", path.resolve("./views"));
@@ -31,11 +37,15 @@ app.use(checkForAuthenticationCookie("token"));
 app.use(express.static(path.resolve("./public")));
 
 app.get("/", async (req, res) => {
-  const allBlogs = await Blog.find({});
-  res.render("home", {
-    user: req.user,
-    blogs: allBlogs,
-  });
+  try {
+    const allBlogs = await Blog.find({});
+    res.render("home", {
+      user: req.user,
+      blogs: allBlogs,
+    });
+  } catch (err) {
+    res.status(500).send('Error retrieving blogs');
+  }
 });
 
 app.use("/user", userRoute);
